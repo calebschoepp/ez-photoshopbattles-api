@@ -2,10 +2,18 @@ const express = require("express");
 const PORT = process.env.PORT || 5000;
 
 const getCategory = (req, res) => {
-  res.send(`Hello World from ${req.params.name}`);
+  res.json({ name: req.params.name, posts: [123, 456, 789] });
 };
 const getPost = (req, res) => {
-  res.send(`Hello World from ${req.params.id}`);
+  res.json({
+    id: req.params.id,
+    original: "https://fakeurl.com",
+    photoshops: [
+      "https://fakeurl.com",
+      "https://fakeurl.com",
+      "https://fakeurl.com"
+    ]
+  });
 };
 
 express()
