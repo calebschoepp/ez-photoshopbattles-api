@@ -7,8 +7,14 @@ const getCategory = (req, res) => {
 const getPost = (req, res) => {
   res.json({
     id: req.params.id,
-    original: "test/original.jpg",
-    photoshops: ["1.jpg", "2.jpg", "3.jpg", "4.gif", "5.jpg"]
+    original: { url: "test/original.jpg", text: "foo" },
+    photoshops: [
+      { url: "1.jpg", text: "bar" },
+      { url: "2.jpg", text: "qux" },
+      { url: "3.jpg", text: "baz" },
+      { url: "4.gif", text: "yap" },
+      { url: "5.jpg", text: "hah" }
+    ]
   });
 };
 
