@@ -19,6 +19,8 @@
   },
   "homepage": "https://github.com/calebschoepp/ez-photoshopbattles-api#readme",
   "dependencies": {
+    "axios": "^0.19.2",
+    "cloudinary": "^1.20.0",
     "express": "^4.17.1",
     "snoowrap": "^1.21.0"
   }

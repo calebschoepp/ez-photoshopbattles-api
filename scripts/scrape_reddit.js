@@ -1,4 +1,7 @@
 const snoowrap = require("snoowrap");
+const fs = require("fs");
+const axios = require("axios");
+const cloudinary = require("cloudinary");
 
 const postLimit = parseInt(process.env.POSTS_PER_CATEGORY);
 const photoshopLimit = parseInt(process.env.PHOTOSHOPS_PER_POST);
@@ -48,12 +51,16 @@ async function handlePost(post) {
     .slice(0, photoshopLimit + 1);
   for (const comment of comments) {
     const { text, url } = parseComment(comment.body);
-    handlePhoto(text, url, comment.score);
+    await handlePhoto(text, url, comment.score);
   }
 }
 
 function parseComment(comment) {
-  const pattern = RegExp(/\[(.*)\]\((.*)\)/);
+  // TODO: Improve the parsing logic here, I currently just ignore any url
+  // without an extension because I can't directly download the image then.
+  // I could have this parsing except urls without extensions but then I would
+  // probably need to sign up and use the imgur API and parse out the id of the image
+  const pattern = RegExp(/\[(.*)\]\((.*\.(jpg|jpeg|png|gif|mp4))\)/);
   const matches = comment.match(pattern);
   if (matches) {
     return { text: matches[1], url: matches[2] };
@@ -62,6 +69,24 @@ function parseComment(comment) {
 }
 
 async function handlePhoto(text, url, score) {
+  // We want to ignore any blank photos - ie. photos that didn't meet our narrow
+  // specifications of url format, extension, markdown style etc.
+  // TODO: lower how many of these there are by implementing features
+  if (text === "" || url === "") {
+    return;
+  }
+  const response = await axios({
+    url,
+    method: "GET",
+    responseType: "stream"
+  });
+
+  const writeStream = cloudinary.uploader.upload_stream(function(result) {
+    console.log(result);
+  });
+
+  response.data.pipe(writeStream);
+
   console.log(text);
   console.log(url);
   console.log(score);
