@@ -4,7 +4,8 @@
   "description": "ez-photoshopbattles-api",
   "main": "/src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "scrape": "heroku local:run node scripts/scrape_reddit.js"
   },
   "repository": {
     "type": "git",
