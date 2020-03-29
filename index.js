@@ -9,11 +9,11 @@ const getPost = (req, res) => {
     id: req.params.id,
     original: { url: "test/original.jpg", text: "foo" },
     photoshops: [
-      { url: "1.jpg", text: "bar" },
-      { url: "2.jpg", text: "qux" },
-      { url: "3.jpg", text: "baz" },
-      { url: "4.gif", text: "yap" },
-      { url: "5.jpg", text: "hah" }
+      { url: "test/1.jpg", text: "bar" },
+      { url: "test/2.jpg", text: "qux" },
+      { url: "test/3.jpg", text: "baz" },
+      { url: "test/4.gif", text: "yap" },
+      { url: "test/5.jpg", text: "hah" }
     ]
   });
 };
