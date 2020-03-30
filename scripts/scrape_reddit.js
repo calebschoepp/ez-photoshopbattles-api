@@ -75,21 +75,20 @@ async function handlePhoto(text, url, score) {
   if (text === "" || url === "") {
     return;
   }
+  const writeStream = cloudinary.uploader.upload_stream(function(result) {
+    console.log(result);
+  });
+
   const response = await axios({
     url,
     method: "GET",
     responseType: "stream"
   });
 
-  const writeStream = cloudinary.uploader.upload_stream(function(result) {
-    console.log(result);
-  });
+  // TODO
+  // ************************** DON"T do the FS STUFF MYSELF JUST PASS THE URL ************************************8//
 
   response.data.pipe(writeStream);
-
-  console.log(text);
-  console.log(url);
-  console.log(score);
 }
 
 run();

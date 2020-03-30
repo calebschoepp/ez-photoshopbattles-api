@@ -5,7 +5,8 @@
   "main": "/src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "scrape": "heroku local:run node scripts/scrape_reddit.js"
+    "scrape": "heroku local:run node scripts/scrape_reddit.js",
+    "testDB": "heroku local:run node scripts/test_db.js"
   },
   "repository": {
     "type": "git",
@@ -22,6 +23,7 @@
     "axios": "^0.19.2",
     "cloudinary": "^1.20.0",
     "express": "^4.17.1",
+    "pg": "^7.18.2",
     "snoowrap": "^1.21.0"
   }
 }
