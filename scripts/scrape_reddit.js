@@ -42,6 +42,9 @@ async function run() {
 async function preScrape(lib) {
   h1("Pre-Scraping Cleanup");
   try {
+    const res = await getCloudinaryPrefixedAssets("ps/");
+    const oldPublicIDs = res.resources.map(res => res.public_id);
+    console.log(oldPublicIDs);
     await deleteOldCloudinaryPhotos("ps/");
   } catch (error) {
     console.log(error.message);
@@ -160,7 +163,6 @@ async function handlePhoto(text, url, score, postID, isOriginal, lib) {
 }
 
 function uploadToCloudinary(image, opts) {
-  // TODO: use opts
   return new Promise((resolve, reject) => {
     cloudinary.v2.uploader.upload(image, opts, (err, res) => {
       if (err) return reject(err);
@@ -168,12 +170,25 @@ function uploadToCloudinary(image, opts) {
     });
   });
 }
+
 function deleteOldCloudinaryPhotos(prefix) {
   return new Promise((resolve, reject) => {
     cloudinary.v2.api.delete_resources_by_prefix(prefix, (err, res) => {
       if (err) return reject(err);
       return resolve(res);
     });
+  });
+}
+
+function getCloudinaryPrefixedAssets(prefix) {
+  return new Promise((resolve, reject) => {
+    cloudinary.v2.api.resources(
+      { type: "upload", prefix: prefix },
+      (err, res) => {
+        if (err) return reject(err);
+        return resolve(res);
+      }
+    );
   });
 }
 
