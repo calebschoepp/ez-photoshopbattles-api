@@ -4,7 +4,7 @@ const { Client } = require("pg");
 const postLimit = parseInt(process.env.POSTS_PER_CATEGORY);
 const photoshopLimit = parseInt(process.env.PHOTOSHOPS_PER_POST);
 
-async function setup(func) {
+async function run() {
   let client;
   let r;
   try {
@@ -31,12 +31,30 @@ async function setup(func) {
   }
   lib = { client: client, r: r };
 
-  await func(lib);
+  await clean(lib);
+  await scrape(lib);
+  await report(lib);
 
   await lib.client.end();
 }
 
-async function run(lib) {
+async function clean(lib) {
+  h1("Cleaning");
+  try {
+    await deleteOldCloudinaryPhotos("ps/");
+  } catch (error) {
+    console.log(error.message);
+    process.exit(1);
+  }
+  console.log("all of the previous content in ps/ was deleted");
+}
+
+async function report(lib) {
+  h1("Reporting");
+}
+
+async function scrape(lib) {
+  h1("Scraping");
   const subreddit = await lib.r.getSubreddit("photoshopbattles");
 
   // Scrape every category
@@ -45,22 +63,22 @@ async function run(lib) {
 }
 
 async function handleCategory(posts, categoryName, lib) {
+  h2(`Scraping ${categoryName}`);
   for (const post of posts) {
-    console.log("---------------");
     await handlePost(post, categoryName, lib);
   }
 }
 
 async function handlePost(post, categoryName, lib) {
-  // Upload original photo and insert post into DB
-  console.log(post);
-  const uploadResult = await uploadToCloudinary(post.url, { folder: "ps" });
+  // Insert post into DB
   const res = await lib.client.query(
-    "INSERT INTO posts (category_name, title, post_url, cloudinary_secure_url, score) VALUES ($1, $2, $3, $4, $5);",
-    [categoryName, post.title, post.url, uploadResult.secure_url, post.score]
+    "INSERT INTO posts (category_name, title, permalink, score) VALUES ($1, $2, $3, $4) RETURNING id;",
+    [categoryName, post.title, post.permalink, post.score]
   );
-  console.log(res);
-  console.log(res.rows);
+  const postID = res.rows[0].id;
+
+  // Add original photo to photos
+  await handlePhoto(post.title, post.url, post.score, postID, true, lib);
 
   // Photoshops come from the parent comments of the post
   // This is a naive approach that misses all other photoshops in children
@@ -72,7 +90,7 @@ async function handlePost(post, categoryName, lib) {
     .slice(0, photoshopLimit + 1);
   for (const comment of comments) {
     const { text, url } = parseComment(comment.body);
-    await handlePhoto(text, url, comment.score, lib);
+    await handlePhoto(text, url, comment.score, postID, false, lib);
   }
 }
 
@@ -89,41 +107,75 @@ function parseComment(comment) {
   return { text: "", url: "" };
 }
 
-async function handlePhoto(text, url, score, lib) {
+async function handlePhoto(text, url, score, postID, isOriginal, lib) {
   // We want to ignore any blank photos - ie. photos that didn't meet our narrow
   // specifications of url format, extension, markdown style etc.
   // TODO: lower how many of these there are by implementing features
   if (text === "" || url === "") {
+    console.log(
+      `Post ${postID} ${isOriginal ? "[original]" : ""}: ---INVALID---`
+    );
     return;
   }
 
   const uploadResult = await uploadToCloudinary(url, { folder: "ps" });
-  // const res = await client.query(
-  //   "INSERT INTO photoshops (post_id INTEGER NOT NULL,
-  //     text varchar(200),
-  //     score INTEGER,
-  //     cloudinary_secure_url varchar(200) NOT NULL,
-  //     cloudinary_public_id varchar(200) NOT NULL,
-  //     width INTEGER NOT NULL,
-  //     height INTEGER NOT NULL,
-  //     format varchar(5) NOT NULL,
-  //     FOREIGN KEY (post_id) REFERENCES posts (id)) VALUES ($1, $2, $3, $4, $5);",
-  //   [categoryName, post.title, post.url, uploadResult.secure_url, post.score]
-  // );
-  // console.log(uploadResult);
+  const res = await lib.client.query(
+    `INSERT INTO photos
+      (post_id, text, score, cloudinary_secure_url, cloudinary_public_id,
+      width, height, format, is_original)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
+    [
+      postID,
+      text,
+      score,
+      uploadResult.secure_url,
+      uploadResult.public_id,
+      uploadResult.width,
+      uploadResult.height,
+      uploadResult.format,
+      isOriginal
+    ]
+  );
+
+  console.log(
+    `Post ${postID} ${isOriginal ? "[original]" : ""}: ${
+      uploadResult.public_id
+    } ${uploadResult.width}x${uploadResult.height}`
+  );
 }
 
 function uploadToCloudinary(image, opts) {
   // TODO: use opts
   return new Promise((resolve, reject) => {
-    cloudinary.v2.uploader.upload(image, opts, (err, url) => {
+    cloudinary.v2.uploader.upload(image, opts, (err, res) => {
       if (err) return reject(err);
-      return resolve(url);
+      return resolve(res);
+    });
+  });
+}
+function deleteOldCloudinaryPhotos(prefix) {
+  return new Promise((resolve, reject) => {
+    cloudinary.v2.api.delete_resources_by_prefix(prefix, (err, res) => {
+      if (err) return reject(err);
+      return resolve(res);
     });
   });
 }
 
-setup(run);
+function h1(s) {
+  console.log();
+  console.log("=".repeat(s.length));
+  console.log(s);
+  console.log("=".repeat(s.length));
+  console.log();
+}
+
+function h2(s) {
+  console.log(s);
+  console.log("-".repeat(s.length));
+}
+
+run();
 
 // for category in categories
 //     posts = category.posts[0:POSTS_PER_CATEGORY]

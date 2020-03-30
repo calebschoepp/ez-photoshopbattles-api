@@ -7,13 +7,12 @@ CREATE TABLE posts (
     id SERIAL PRIMARY KEY,
     category_name varchar(40) NOT NULL,
     title varchar(200),
-    post_url varchar(200) NOT NULL,
-    cloudinary_secure_url varchar(200) NOT NULL,
+    permalink varchar(200) NOT NULL,
     score INTEGER,
     FOREIGN KEY (category_name) REFERENCES categories (name)
 );
 
-CREATE TABLE photoshops (
+CREATE TABLE photos (
     id SERIAL PRIMARY KEY,
     post_id INTEGER NOT NULL,
     text varchar(200),
@@ -23,6 +22,7 @@ CREATE TABLE photoshops (
     width INTEGER NOT NULL,
     height INTEGER NOT NULL,
     format varchar(5) NOT NULL,
+    is_original BOOLEAN NOT NULL,
     FOREIGN KEY (post_id) REFERENCES posts (id)
 );
 
