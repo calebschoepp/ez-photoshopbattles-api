@@ -1,16 +1,16 @@
 CREATE TABLE categories (
     id SERIAL PRIMARY KEY,
-    name varchar(40) NOT NULL
+    name varchar(40) NOT NULL UNIQUE
 );
 
 CREATE TABLE posts (
     id SERIAL PRIMARY KEY,
-    category_id INTEGER NOT NULL,
+    category_name varchar(40) NOT NULL,
     title varchar(200),
     post_url varchar(200) NOT NULL,
     cloudinary_secure_url varchar(200) NOT NULL,
     score INTEGER,
-    FOREIGN KEY (category_id) REFERENCES categories (id)
+    FOREIGN KEY (category_name) REFERENCES categories (name)
 );
 
 CREATE TABLE photoshops (
@@ -25,3 +25,13 @@ CREATE TABLE photoshops (
     format varchar(5) NOT NULL,
     FOREIGN KEY (post_id) REFERENCES posts (id)
 );
+
+INSERT INTO categories (name) VALUES ('hot');
+INSERT INTO categories (name) VALUES ('new');
+INSERT INTO categories (name) VALUES ('top:now');
+INSERT INTO categories (name) VALUES ('top:today');
+INSERT INTO categories (name) VALUES ('top:week');
+INSERT INTO categories (name) VALUES ('top:month');
+INSERT INTO categories (name) VALUES ('top:year');
+INSERT INTO categories (name) VALUES ('top:all');
+INSERT INTO categories (name) VALUES ('rising');
