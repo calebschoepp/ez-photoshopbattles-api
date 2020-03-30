@@ -44,17 +44,29 @@ async function preScrape(lib) {
   try {
     const res = await getCloudinaryPrefixedAssets("ps/");
     const oldPublicIDs = res.resources.map(res => res.public_id);
-    console.log(oldPublicIDs);
+
+    // Delete the photo records from the DB
+    for (const id of oldPublicIDs) {
+      const res = await lib.client.query(
+        `DELETE FROM photos WHERE cloudinary_public_id=$1`,
+        [id]
+      );
+    }
+    console.log("All rows in photos for old photos were deleted");
+    // TODO: Clean up dead posts that can no longer be reached either
+
+    // Delete the photos from cloudinary
     await deleteOldCloudinaryPhotos("ps/");
+    console.log("All of the previous content in ps/ was deleted");
   } catch (error) {
     console.log(error.message);
     process.exit(1);
   }
-  console.log("all of the previous content in ps/ was deleted");
 }
 
-async function postScrape(lib) {
+async function postScrape(oldPublicIDs, lib) {
   h1("Post-Scraping Cleanup");
+  // TODO: do the deletion in here so that there is no time without photos
 }
 
 async function report(lib) {
