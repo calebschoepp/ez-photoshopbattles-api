@@ -1,22 +1,59 @@
 const express = require("express");
 const PORT = process.env.PORT || 5000;
+const { Pool } = require("pg");
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: true
+});
 
-const getCategory = (req, res) => {
-  res.json({ name: req.params.name, posts: [123, 456, 789] });
+const asyncMiddleware = fn => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
 };
-const getPost = (req, res) => {
-  res.json({
-    id: req.params.id,
-    original: { url: "test/original.jpg", text: "foo" },
-    photoshops: [
-      { url: "test/1.jpg", text: "bar" },
-      { url: "test/2.jpg", text: "qux" },
-      { url: "test/3.jpg", text: "baz" },
-      { url: "test/4.gif", text: "yap" },
-      { url: "test/5.jpg", text: "hah" }
-    ]
-  });
-};
+
+const getCategory = asyncMiddleware(async (req, res, next) => {
+  try {
+    const name = req.params.name;
+    const {
+      rows
+    } = await pool.query("SELECT id FROM posts WHERE category_name=$1", [name]);
+    let posts = [];
+    for (const row of rows) {
+      posts.push(row.id);
+    }
+    const response = { name, posts };
+    res.json(response);
+  } catch (error) {
+    console.log("Encountered error");
+    console.log(error.message);
+    res.status(500).send("Failure to load posts");
+  }
+});
+
+const getPost = asyncMiddleware(async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const { rows } = await pool.query(
+      `SELECT h.cloudinary_secure_url as url, h.text as text, h.is_original as is_original
+      FROM posts p INNER JOIN photos h ON p.id=h.post_id WHERE p.id=$1`,
+      [id]
+    );
+    let original;
+    let photoshops = [];
+    for (const row of rows) {
+      if (row.is_original) {
+        original = { url: row.url, text: row.text };
+      } else {
+        photoshops.push({ url: row.url, text: row.text });
+      }
+    }
+    const response = { id, original, photoshops };
+    res.json(response);
+  } catch (error) {
+    console.log("Encountered error");
+    console.log(error.message);
+    res.status(500).send("Failure to load photos");
+  }
+});
 
 app = express();
 
