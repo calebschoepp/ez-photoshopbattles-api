@@ -31,15 +31,16 @@ async function run() {
   }
   lib = { client: client, r: r };
 
-  await clean(lib);
+  await preScrape(lib);
   await scrape(lib);
+  await postScrape(lib);
   await report(lib);
 
   await lib.client.end();
 }
 
-async function clean(lib) {
-  h1("Cleaning");
+async function preScrape(lib) {
+  h1("Pre-Scraping Cleanup");
   try {
     await deleteOldCloudinaryPhotos("ps/");
   } catch (error) {
@@ -47,6 +48,10 @@ async function clean(lib) {
     process.exit(1);
   }
   console.log("all of the previous content in ps/ was deleted");
+}
+
+async function postScrape(lib) {
+  h1("Post-Scraping Cleanup");
 }
 
 async function report(lib) {
@@ -113,35 +118,45 @@ async function handlePhoto(text, url, score, postID, isOriginal, lib) {
   // TODO: lower how many of these there are by implementing features
   if (text === "" || url === "") {
     console.log(
-      `Post ${postID} ${isOriginal ? "[original]" : ""}: ---INVALID---`
+      `Post ${postID}: ${isOriginal ? "[original]" : ""} ---INVALID---`
     );
     return;
   }
 
-  const uploadResult = await uploadToCloudinary(url, { folder: "ps" });
-  const res = await lib.client.query(
-    `INSERT INTO photos
-      (post_id, text, score, cloudinary_secure_url, cloudinary_public_id,
-      width, height, format, is_original)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
-    [
-      postID,
-      text,
-      score,
-      uploadResult.secure_url,
-      uploadResult.public_id,
-      uploadResult.width,
-      uploadResult.height,
-      uploadResult.format,
-      isOriginal
-    ]
-  );
-
-  console.log(
-    `Post ${postID} ${isOriginal ? "[original]" : ""}: ${
-      uploadResult.public_id
-    } ${uploadResult.width}x${uploadResult.height}`
-  );
+  try {
+    const uploadResult = await uploadToCloudinary(url, {
+      folder: "ps",
+      resource_type: "auto"
+    });
+    const res = await lib.client.query(
+      `INSERT INTO photos
+        (post_id, text, score, cloudinary_secure_url, cloudinary_public_id,
+        width, height, format, is_original)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
+      [
+        postID,
+        text,
+        score,
+        uploadResult.secure_url,
+        uploadResult.public_id,
+        uploadResult.width,
+        uploadResult.height,
+        uploadResult.format,
+        isOriginal
+      ]
+    );
+    console.log(
+      `Post ${postID}: ${isOriginal ? "[original]" : ""} ${
+        uploadResult.public_id
+      } ${uploadResult.width}x${uploadResult.height}`
+    );
+  } catch (error) {
+    console.log(
+      `Post ${postID}: ${isOriginal ? "[original]" : ""} ---FAILURE--- ${
+        error.message
+      }`
+    );
+  }
 }
 
 function uploadToCloudinary(image, opts) {
