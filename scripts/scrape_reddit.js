@@ -123,11 +123,13 @@ class Scraper {
   async _postScrape() {
     this._h1("Post-Scraping");
     try {
-      // Delete the old cloudinary content
-      await this.cloudinary.deletePrefix(this.oldScrapingSessionID);
+      if (this.oldScrapingSessionID) {
+        // Delete the old cloudinary content
+        await this.cloudinary.deletePrefix(this.oldScrapingSessionID);
 
-      // Delete the old cloudinary folder
-      await this.cloudinary.deleteFolder(this.oldScrapingSessionID);
+        // Delete the old cloudinary folder
+        await this.cloudinary.deleteFolder(this.oldScrapingSessionID);
+      }
 
       console.log("Old cloudinary content deleted");
     } catch (error) {
