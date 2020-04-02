@@ -1,3 +1,8 @@
+CREATE TABLE scraping_sessions (
+    id SERIAL PRIMARY KEY,
+    created_at timestamp default current_timestamp
+)
+
 CREATE TABLE categories (
     id SERIAL PRIMARY KEY,
     name varchar(40) NOT NULL UNIQUE
@@ -6,10 +11,12 @@ CREATE TABLE categories (
 CREATE TABLE posts (
     id SERIAL PRIMARY KEY,
     category_name varchar(40) NOT NULL,
+    scraping_session_id INTEGER NOT NULL,
     title varchar(200),
     permalink varchar(200) NOT NULL,
     score INTEGER,
-    FOREIGN KEY (category_name) REFERENCES categories (name)
+    FOREIGN KEY (category_name) REFERENCES categories (name),
+    FOREIGN KEY (scraping_session_id) REFERENCES scraping_sessions (id) ON DELETE CASCADE
 );
 
 CREATE TABLE photos (
@@ -23,7 +30,7 @@ CREATE TABLE photos (
     height INTEGER NOT NULL,
     format varchar(5) NOT NULL,
     is_original BOOLEAN NOT NULL,
-    FOREIGN KEY (post_id) REFERENCES posts (id)
+    FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
 );
 
 INSERT INTO categories (name) VALUES ('hot');

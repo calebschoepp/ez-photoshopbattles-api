@@ -185,10 +185,14 @@ function uploadToCloudinary(image, opts) {
 
 function deleteOldCloudinaryPhotos(prefix) {
   return new Promise((resolve, reject) => {
-    cloudinary.v2.api.delete_resources_by_prefix(prefix, (err, res) => {
-      if (err) return reject(err);
-      return resolve(res);
-    });
+    cloudinary.v2.api.delete_resources_by_prefix(
+      prefix,
+      { resource_type: "video" },
+      (err, res) => {
+        if (err) return reject(err);
+        return resolve(res);
+      }
+    );
   });
 }
 
@@ -218,29 +222,3 @@ function h2(s) {
 }
 
 run();
-
-// for category in categories
-//     posts = category.posts[0:POSTS_PER_CATEGORY]
-//     for post in posts
-//         storePost(post)
-
-// storePost(post):
-//     storePhoto(post.original_data)
-//     photoshops = post.photos[0:PHOTOSHOPS_PER_POST]
-//     for photoshop in photoshops
-//         storePhoto(photoshop)
-
-// storePhoto(photo):
-//     cloudinaryResult = storeInCloudinary(photo)
-//     writeToDB(photo, cloudinaryResult)
-
-// Uploading to cloudinary as a stream
-// const writeStream = cloudinary.uploader.upload_stream(function(result) {
-//   console.log(result);
-// });
-// const response = await axios({
-//   url,
-//   method: "GET",
-//   responseType: "stream"
-// });
-// response.data.pipe(writeStream);

@@ -1,39 +1,35 @@
-// For get category
+const cloudinary = require("cloudinary");
 
-// SELECT p.id as post_id
-// FROM categories c
-// INNER JOIN posts p
-// ON c.id = p.category_id
-// WHERE c.name = $1;
+function getCloudinaryPrefixedAssets(prefix) {
+  return new Promise((resolve, reject) => {
+    cloudinary.v2.api.resources(
+      { type: "upload", prefix: prefix },
+      (err, res) => {
+        if (err) return reject(err);
+        return resolve(res);
+      }
+    );
+  });
+}
 
-// For get posts
-
-// SELECT h.text as text, h.url as url, h.score as score
-// FROM posts p
-// INNER JOIN photoshops h
-// ON p.id = h.post_id
-// WHERE p.id = $1;
-
-// And also run this for original photo
-
-// SELECT text, url, score
-// FROM posts
-// WHERE id = $1;
+function deleteOldCloudinaryPhotos(prefix) {
+  return new Promise((resolve, reject) => {
+    cloudinary.v2.api.delete_resources_by_prefix(
+      prefix,
+      { resource_type: "raw" },
+      (err, res) => {
+        if (err) return reject(err);
+        return resolve(res);
+      }
+    );
+  });
+}
 
 async function run() {
-  const { Client } = require("pg");
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: true
-  });
-  await client.connect();
-  const res = await client.query(
-    "SELECT table_schema,table_name FROM information_schema.tables;"
-  );
-  for (let row of res.rows) {
-    console.log(JSON.stringify(row));
-  }
-  await client.end();
+  const res = await getCloudinaryPrefixedAssets("ps/");
+  const oldPublicIDs = res.resources.map(res => res.public_id);
+  console.log(oldPublicIDs);
+  await deleteOldCloudinaryPhotos("ps/");
 }
 
 run();
