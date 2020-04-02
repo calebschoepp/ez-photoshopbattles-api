@@ -122,14 +122,21 @@ class Scraper {
 
   async _postScrape() {
     this._h1("Post-Scraping");
+    try {
+      // Delete the old cloudinary content
+      await this.cloudinary.deletePrefix(this.oldScrapingSessionID);
 
-    // Delete the old cloudinary content
-    await this.cloudinary.deletePrefix(this.oldScrapingSessionID);
+      // Delete the old cloudinary folder
+      await this.cloudinary.deleteFolder(this.oldScrapingSessionID);
 
-    // Delete the old cloudinary folder
-    await this.cloudinary.deleteFolder(this.oldScrapingSessionID);
-
-    console.log("Old cloudinary content deleted");
+      console.log("Old cloudinary content deleted");
+    } catch (error) {
+      console.log(
+        "Something may have gone wrong while deleting old cloudinary resources"
+      );
+      console.log("It is possible it just has nothing to delete.");
+      console.log(error.message);
+    }
   }
 
   async _report() {
