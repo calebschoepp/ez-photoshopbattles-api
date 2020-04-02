@@ -1,7 +1,7 @@
 CREATE TABLE scraping_sessions (
     id SERIAL PRIMARY KEY,
     created_at timestamp default current_timestamp
-)
+);
 
 CREATE TABLE categories (
     id SERIAL PRIMARY KEY,
