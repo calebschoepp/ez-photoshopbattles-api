@@ -14,14 +14,10 @@ function getCloudinaryPrefixedAssets(prefix) {
 
 function deleteOldCloudinaryPhotos(prefix) {
   return new Promise((resolve, reject) => {
-    cloudinary.v2.api.delete_resources_by_prefix(
-      prefix,
-      { resource_type: "raw" },
-      (err, res) => {
-        if (err) return reject(err);
-        return resolve(res);
-      }
-    );
+    cloudinary.v2.api.delete_resources_by_prefix(prefix, (err, res) => {
+      if (err) return reject(err);
+      return resolve(res);
+    });
   });
 }
 
