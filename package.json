@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "scrape": "heroku local:run node scripts/scrape_reddit.js",
-    "testDB": "heroku local:run node scripts/test_db.js"
+    "testDB": "heroku local:run node scripts/test_db.js",
+    "testImgur": "heroku local:run node scripts/test_imgur.js"
   },
   "repository": {
     "type": "git",

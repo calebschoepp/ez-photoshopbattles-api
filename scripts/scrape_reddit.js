@@ -1,8 +1,25 @@
 const snoowrap = require("snoowrap");
 const cloudinary = require("cloudinary");
+const axios = require("axios");
 const { Client } = require("pg");
 const postLimit = parseInt(process.env.POSTS_PER_CATEGORY);
 const photoshopLimit = parseInt(process.env.PHOTOSHOPS_PER_POST);
+
+const imgurBaseURL = "https://api.imgur.com/3/image";
+
+class ImgurClient {
+  async getImageURL(imageID) {
+    const url = `${imgurBaseURL}/${imageID}`;
+    try {
+      const res = await axios.get(url, {
+        headers: { Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}` }
+      });
+      return res.data.data.link;
+    } catch (error) {
+      return "IMGUR API FAILURE";
+    }
+  }
+}
 
 class CloudinaryClient {
   upload(image, opts) {
@@ -56,6 +73,7 @@ class Scraper {
     });
 
     this.cloudinary = new CloudinaryClient();
+    this.imgur = new ImgurClient();
   }
 
   async run() {
@@ -125,39 +143,39 @@ class Scraper {
       });
       await this._handleCategory(topDayPosts, "top:day");
 
-      let topWeekPosts = await subreddit.getTop({
-        time: "week",
-        limit: postLimit
-      });
-      await this._handleCategory(topWeekPosts, "top:week");
+      // let topWeekPosts = await subreddit.getTop({
+      //   time: "week",
+      //   limit: postLimit
+      // });
+      // await this._handleCategory(topWeekPosts, "top:week");
 
-      let topMonthPosts = await subreddit.getTop({
-        time: "month",
-        limit: postLimit
-      });
-      await this._handleCategory(topMonthPosts, "top:month");
+      // let topMonthPosts = await subreddit.getTop({
+      //   time: "month",
+      //   limit: postLimit
+      // });
+      // await this._handleCategory(topMonthPosts, "top:month");
 
-      let topYearPosts = await subreddit.getTop({
-        time: "year",
-        limit: postLimit
-      });
-      await this._handleCategory(topYearPosts, "top:year");
+      // let topYearPosts = await subreddit.getTop({
+      //   time: "year",
+      //   limit: postLimit
+      // });
+      // await this._handleCategory(topYearPosts, "top:year");
 
-      let topAllPosts = await subreddit.getTop({
-        time: "all",
-        limit: postLimit
-      });
-      await this._handleCategory(topAllPosts, "top:all");
+      // let topAllPosts = await subreddit.getTop({
+      //   time: "all",
+      //   limit: postLimit
+      // });
+      // await this._handleCategory(topAllPosts, "top:all");
 
-      let hotPosts = await subreddit.getHot({
-        limit: postLimit
-      });
-      await this._handleCategory(hotPosts, "hot");
+      // let hotPosts = await subreddit.getHot({
+      //   limit: postLimit
+      // });
+      // await this._handleCategory(hotPosts, "hot");
 
-      let risingPosts = await subreddit.getRising({
-        limit: postLimit
-      });
-      await this._handleCategory(risingPosts, "rising");
+      // let risingPosts = await subreddit.getRising({
+      //   limit: postLimit
+      // });
+      // await this._handleCategory(risingPosts, "rising");
     } catch (error) {
       this._kill(error.message);
     }
@@ -221,7 +239,7 @@ class Scraper {
       .comments.sort((a, b) => (a.score < b.score ? 1 : -1)) // Sort func flipped to have highest first
       .slice(0, photoshopLimit + 1);
     for (const comment of comments) {
-      const { text, url } = this._parseComment(comment.body);
+      const { text, url } = await this._parseComment(comment.body);
       await this._handlePhoto(text, url, comment.score, postID, false);
     }
   }
@@ -230,9 +248,18 @@ class Scraper {
     // We want to ignore any blank photos - ie. photos that didn't meet our narrow
     // specifications of url format, extension, markdown style etc.
     // TODO: lower how many of these there are by implementing features
-    if (text === "" || url === "") {
+    if (url === "" || text === "") {
       console.log(
         `Post ${postID}: ${isOriginal ? "[original]" : ""} ---INVALID---`
+      );
+      return;
+    }
+
+    if (url === "IMGUR API FAILURE") {
+      console.log(
+        `Post ${postID}: ${
+          isOriginal ? "[original]" : ""
+        } ---IMGURE API FAILURE---`
       );
       return;
     }
@@ -273,16 +300,28 @@ class Scraper {
     }
   }
 
-  _parseComment(comment) {
-    // TODO: Improve the parsing logic here, I currently just ignore any url
-    // without an extension because I can't directly download the image then.
-    // I could have this parsing except urls without extensions but then I would
-    // probably need to sign up and use the imgur API and parse out the id of the image
-    const pattern = RegExp(/\[(.*)\]\((.*\.(jpg|jpeg|png|gif|mp4))\)/);
-    const matches = comment.match(pattern);
-    if (matches) {
-      return { text: matches[1], url: matches[2] };
+  async _parseComment(comment) {
+    // TODO: Improve the parsing logic here. I currently ignore non imgur links
+    // I also fail to parse any imgur album links i.e. imgur.com/a/ad83De
+
+    // Take first pass on comment looking for urls ending in file type that cloudinary
+    // is capable of directly dealing with
+    const pattern1 = RegExp(/\[(.*)\]\((.*\.(jpg|jpeg|png|gif|mp4))\)/);
+    const matches1 = comment.match(pattern1);
+    if (matches1) {
+      return { text: matches1[1], url: matches1[2] };
     }
+
+    // Take second pass on comment looking for imgur urls without a file ending,
+    // with these we can get the url to pass to cloudinary by pining imgur api
+    const pattern2 = RegExp(/\[(.*)\]\(.*imgur\.com\/(?:.*\/)*(.*)\)/);
+    const matches2 = comment.match(pattern2);
+    if (matches2) {
+      console.log(matches2[0]);
+      const url = await this.imgur.getImageURL(matches2[2]);
+      return { text: matches2[1], url: url };
+    }
+
     return { text: "", url: "" };
   }
 
