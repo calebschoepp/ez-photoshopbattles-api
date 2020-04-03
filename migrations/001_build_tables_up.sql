@@ -36,7 +36,7 @@ CREATE TABLE photos (
 INSERT INTO categories (name) VALUES ('hot');
 INSERT INTO categories (name) VALUES ('new');
 INSERT INTO categories (name) VALUES ('top:now');
-INSERT INTO categories (name) VALUES ('top:today');
+INSERT INTO categories (name) VALUES ('top:day');
 INSERT INTO categories (name) VALUES ('top:week');
 INSERT INTO categories (name) VALUES ('top:month');
 INSERT INTO categories (name) VALUES ('top:year');
