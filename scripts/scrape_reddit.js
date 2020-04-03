@@ -107,54 +107,60 @@ class Scraper {
       `INSERT INTO scraping_sessions DEFAULT VALUES RETURNING id;`
     );
     this.newScrapingSessionID = insertRes.rows[0].id;
-    console.log("New scraping session inserted");
+    console.log(
+      `New scraping session inserted with id ${this.newScrapingSessionID}`
+    );
   }
 
   async _scrape() {
     this._h1("Scraping");
 
-    const subreddit = await this.r.getSubreddit("photoshopbattles");
+    try {
+      const subreddit = await this.r.getSubreddit("photoshopbattles");
 
-    // Scrape every category
-    let topDayPosts = await subreddit.getTop({
-      time: "day",
-      limit: postLimit
-    });
-    await this._handleCategory(topDayPosts, "top:day");
+      // Scrape every category
+      let topDayPosts = await subreddit.getTop({
+        time: "day",
+        limit: postLimit
+      });
+      await this._handleCategory(topDayPosts, "top:day");
 
-    let topWeekPosts = await subreddit.getTop({
-      time: "week",
-      limit: postLimit
-    });
-    await this._handleCategory(topWeekPosts, "top:week");
+      let topWeekPosts = await subreddit.getTop({
+        time: "week",
+        limit: postLimit
+      });
+      await this._handleCategory(topWeekPosts, "top:week");
 
-    let topMonthPosts = await subreddit.getTop({
-      time: "month",
-      limit: postLimit
-    });
-    await this._handleCategory(topMonthPosts, "top:month");
+      let topMonthPosts = await subreddit.getTop({
+        time: "month",
+        limit: postLimit
+      });
+      await this._handleCategory(topMonthPosts, "top:month");
 
-    let topYearPosts = await subreddit.getTop({
-      time: "year",
-      limit: postLimit
-    });
-    await this._handleCategory(topYearPosts, "top:year");
+      let topYearPosts = await subreddit.getTop({
+        time: "year",
+        limit: postLimit
+      });
+      await this._handleCategory(topYearPosts, "top:year");
 
-    let topAllPosts = await subreddit.getTop({
-      time: "all",
-      limit: postLimit
-    });
-    await this._handleCategory(topAllPosts, "top:all");
+      let topAllPosts = await subreddit.getTop({
+        time: "all",
+        limit: postLimit
+      });
+      await this._handleCategory(topAllPosts, "top:all");
 
-    let hotPosts = await subreddit.getHot({
-      limit: postLimit
-    });
-    await this._handleCategory(hotPosts, "hot");
+      let hotPosts = await subreddit.getHot({
+        limit: postLimit
+      });
+      await this._handleCategory(hotPosts, "hot");
 
-    let risingPosts = await subreddit.getRising({
-      limit: postLimit
-    });
-    await this._handleCategory(risingPosts, "rising");
+      let risingPosts = await subreddit.getRising({
+        limit: postLimit
+      });
+      await this._handleCategory(risingPosts, "rising");
+    } catch (error) {
+      this._kill(error.message);
+    }
   }
 
   async _postScrape() {
