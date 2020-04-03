@@ -303,6 +303,7 @@ class Scraper {
   async _parseComment(comment) {
     // TODO: Improve the parsing logic here. I currently ignore non imgur links
     // I also fail to parse any imgur album links i.e. imgur.com/a/ad83De
+    // I also fail to parse any imgur gallery links i.e imgur.com/gallery/dil3AA
 
     // Take first pass on comment looking for urls ending in file type that cloudinary
     // is capable of directly dealing with
@@ -317,7 +318,6 @@ class Scraper {
     const pattern2 = RegExp(/\[(.*)\]\(.*imgur\.com\/(?:.*\/)*(.*)\)/);
     const matches2 = comment.match(pattern2);
     if (matches2) {
-      console.log(matches2[0]);
       const url = await this.imgur.getImageURL(matches2[2]);
       return { text: matches2[1], url: url };
     }
