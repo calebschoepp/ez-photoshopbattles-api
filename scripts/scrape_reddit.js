@@ -116,8 +116,45 @@ class Scraper {
     const subreddit = await this.r.getSubreddit("photoshopbattles");
 
     // Scrape every category
-    let posts = await subreddit.getTop({ time: "week", limit: postLimit });
-    await this._handleCategory(posts, "top:week");
+    let topDayPosts = await subreddit.getTop({
+      time: "day",
+      limit: postLimit
+    });
+    await this._handleCategory(topDayPosts, "top:day");
+
+    let topWeekPosts = await subreddit.getTop({
+      time: "week",
+      limit: postLimit
+    });
+    await this._handleCategory(topWeekPosts, "top:week");
+
+    let topMonthPosts = await subreddit.getTop({
+      time: "month",
+      limit: postLimit
+    });
+    await this._handleCategory(topMonthPosts, "top:month");
+
+    let topYearPosts = await subreddit.getTop({
+      time: "year",
+      limit: postLimit
+    });
+    await this._handleCategory(topYearPosts, "top:year");
+
+    let topAllPosts = await subreddit.getTop({
+      time: "all",
+      limit: postLimit
+    });
+    await this._handleCategory(topAllPosts, "top:all");
+
+    let hotPosts = await subreddit.getHot({
+      limit: postLimit
+    });
+    await this._handleCategory(hotPosts, "hot");
+
+    let risingPosts = await subreddit.getRising({
+      limit: postLimit
+    });
+    await this._handleCategory(risingPosts, "rising");
   }
 
   async _postScrape() {
