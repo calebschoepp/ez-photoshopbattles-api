@@ -5,16 +5,32 @@ const { Client } = require("pg");
 const postLimit = parseInt(process.env.POSTS_PER_CATEGORY);
 const photoshopLimit = parseInt(process.env.PHOTOSHOPS_PER_POST);
 
-const imgurBaseURL = "https://api.imgur.com/3/image";
+const imgurBaseURL = "https://api.imgur.com/3";
 
 class ImgurClient {
-  async getImageURL(imageID) {
-    const url = `${imgurBaseURL}/${imageID}`;
+  async urlFromHash(imageHash) {
+    const url = `${imgurBaseURL}/image/${imageHash}`;
     try {
       const res = await axios.get(url, {
         headers: { Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}` }
       });
       return res.data.data.link;
+    } catch (error) {
+      return "IMGUR API FAILURE";
+    }
+  }
+
+  async urlFromAlbum(albumHash) {
+    const url = `${imgurBaseURL}/album/${albumHash}/images`;
+    try {
+      const res = await axios.get(url, {
+        headers: { Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}` }
+      });
+      const images = res.data.data;
+      if (!images[0]) {
+        throw new Error("No images in album");
+      }
+      return images[0].link;
     } catch (error) {
       return "IMGUR API FAILURE";
     }
@@ -259,7 +275,7 @@ class Scraper {
       console.log(
         `Post ${postID}: ${
           isOriginal ? "[original]" : ""
-        } ---IMGURE API FAILURE---`
+        } ---IMGUR API FAILURE---`
       );
       return;
     }
@@ -301,8 +317,7 @@ class Scraper {
   }
 
   async _parseComment(comment) {
-    // TODO: Improve the parsing logic here. I currently ignore non imgur links
-    // I also fail to parse any imgur album links i.e. imgur.com/a/ad83De
+    // TODO: Improve the parsing logic here. I currently ignore non imgur links without file type
     // I also fail to parse any imgur gallery links i.e imgur.com/gallery/dil3AA
 
     // Take first pass on comment looking for urls ending in file type that cloudinary
@@ -313,13 +328,21 @@ class Scraper {
       return { text: matches1[1], url: matches1[2] };
     }
 
-    // Take second pass on comment looking for imgur urls without a file ending,
-    // with these we can get the url to pass to cloudinary by pining imgur api
-    const pattern2 = RegExp(/\[(.*)\]\(.*imgur\.com\/(?:.*\/)*(.*)\)/);
+    // Take second pass on comment looking for imgur urls that are part of an albmum
+    const pattern2 = RegExp(/\[(.*)\]\(.*imgur\.com\/a\/(\w*)(?:\/.*)*\)/);
     const matches2 = comment.match(pattern2);
     if (matches2) {
-      const url = await this.imgur.getImageURL(matches2[2]);
+      const url = await this.imgur.urlFromAlbum(matches2[2]);
       return { text: matches2[1], url: url };
+    }
+
+    // Take third pass on comment looking for imgur urls without a file ending,
+    // with these we can get the url to pass to cloudinary by pinging imgur api
+    const pattern3 = RegExp(/\[(.*)\]\(.*imgur\.com\/(?:.*\/)*(.*)\)/);
+    const matches3 = comment.match(pattern3);
+    if (matches3) {
+      const url = await this.imgur.urlFromHash(matches3[2]);
+      return { text: matches3[1], url: url };
     }
 
     return { text: "", url: "" };

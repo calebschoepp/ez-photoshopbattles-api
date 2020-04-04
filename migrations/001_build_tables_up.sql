@@ -26,8 +26,8 @@ CREATE TABLE photos (
     score INTEGER,
     cloudinary_secure_url varchar(200) NOT NULL,
     cloudinary_public_id varchar(200) NOT NULL,
-    width INTEGER NOT NULL,
-    height INTEGER NOT NULL,
+    width INTEGER,
+    height INTEGER,
     format varchar(5) NOT NULL,
     is_original BOOLEAN NOT NULL,
     FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
