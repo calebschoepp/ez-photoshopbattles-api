@@ -12,7 +12,7 @@ class ImgurClient {
     const url = `${imgurBaseURL}/image/${imageHash}`;
     try {
       const res = await axios.get(url, {
-        headers: { Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}` }
+        headers: { Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}` },
       });
       return res.data.data.link;
     } catch (error) {
@@ -24,7 +24,7 @@ class ImgurClient {
     const url = `${imgurBaseURL}/album/${albumHash}/images`;
     try {
       const res = await axios.get(url, {
-        headers: { Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}` }
+        headers: { Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}` },
       });
       const images = res.data.data;
       if (!images[0]) {
@@ -85,7 +85,7 @@ class Scraper {
       userAgent: process.env.REDDIT_USER_AGENT,
       clientId: process.env.REDDIT_CLIENT_ID,
       clientSecret: process.env.REDDIT_CLIENT_SECRET,
-      refreshToken: process.env.REDDIT_REFRESH_TOKEN
+      refreshToken: process.env.REDDIT_REFRESH_TOKEN,
     });
 
     this.cloudinary = new CloudinaryClient();
@@ -98,8 +98,8 @@ class Scraper {
       this.client = new Client({
         connectionString: process.env.DATABASE_URL,
         ssl: {
-          rejectUnauthorized: false
-        }
+          rejectUnauthorized: false,
+        },
       });
       await this.client.connect();
     } catch (err) {
@@ -155,41 +155,41 @@ class Scraper {
       // Scrape every category
       let topDayPosts = await subreddit.getTop({
         time: "day",
-        limit: postLimit
+        limit: postLimit,
       });
       await this._handleCategory(topDayPosts, "top:day");
 
       let topWeekPosts = await subreddit.getTop({
         time: "week",
-        limit: postLimit
+        limit: postLimit,
       });
       await this._handleCategory(topWeekPosts, "top:week");
 
       let topMonthPosts = await subreddit.getTop({
         time: "month",
-        limit: postLimit
+        limit: postLimit,
       });
       await this._handleCategory(topMonthPosts, "top:month");
 
       let topYearPosts = await subreddit.getTop({
         time: "year",
-        limit: postLimit
+        limit: postLimit,
       });
       await this._handleCategory(topYearPosts, "top:year");
 
       let topAllPosts = await subreddit.getTop({
         time: "all",
-        limit: postLimit
+        limit: postLimit,
       });
       await this._handleCategory(topAllPosts, "top:all");
 
       let hotPosts = await subreddit.getHot({
-        limit: postLimit
+        limit: postLimit,
       });
       await this._handleCategory(hotPosts, "hot");
 
       let risingPosts = await subreddit.getRising({
-        limit: postLimit
+        limit: postLimit,
       });
       await this._handleCategory(risingPosts, "rising");
     } catch (error) {
@@ -238,7 +238,7 @@ class Scraper {
         this.newScrapingSessionID,
         post.title,
         post.permalink,
-        post.score
+        post.score,
       ]
     );
     const postID = res.rows[0].id;
@@ -283,7 +283,7 @@ class Scraper {
     try {
       const uploadResult = await this.cloudinary.upload(url, {
         folder: this.newScrapingSessionID,
-        resource_type: "auto"
+        resource_type: "auto",
       });
       const res = await this.client.query(
         `INSERT INTO photos
@@ -299,7 +299,7 @@ class Scraper {
           uploadResult.width,
           uploadResult.height,
           uploadResult.format,
-          isOriginal
+          isOriginal,
         ]
       );
       console.log(
