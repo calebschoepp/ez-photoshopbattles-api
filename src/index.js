@@ -33,24 +33,26 @@ const getPost = asyncMiddleware(async (req, res, next) => {
   try {
     const id = req.params.id;
     const { rows } = await pool.query(
-      `SELECT h.cloudinary_secure_url as url, h.text as text, h.is_original as is_original, h.height as height
+      `SELECT h.cloudinary_secure_url as url, h.text as text, h.is_original as is_original,
+      h.height as height, h.width as width, h.score as score
       FROM posts p INNER JOIN photos h ON p.id=h.post_id WHERE p.id=$1`,
       [id]
     );
-    let original;
-    let photoshops = [];
+    const sortedRows = rows.sort((a, b) => {
+      a.is_original - b.is_original || a.score - b.score;
+    });
+    let photos = [];
     let maxHeight = 0;
-    for (const row of rows) {
+    let correspondingWidth = 0;
+
+    for (const row of sortedRows) {
       if (row.height > maxHeight) {
         maxHeight = row.height;
+        correspondingWidth = row.width;
       }
-      if (row.is_original) {
-        original = { url: row.url, text: row.text };
-      } else {
-        photoshops.push({ url: row.url, text: row.text });
-      }
+      photos.push({ url: row.url, text: row.text, score: row.score });
     }
-    const response = { id, maxHeight, original, photoshops };
+    const response = { id, maxHeight, correspondingWidth, photos };
     res.json(response);
   } catch (error) {
     console.log("Encountered error");
