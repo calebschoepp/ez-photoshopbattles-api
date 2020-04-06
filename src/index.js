@@ -33,7 +33,7 @@ const getPost = asyncMiddleware(async (req, res, next) => {
   try {
     const id = req.params.id;
     const { rows } = await pool.query(
-      `SELECT h.cloudinary_secure_url as url, h.text as text, h.is_original as is_original, h.height as height,
+      `SELECT h.cloudinary_secure_url as url, h.text as text, h.is_original as is_original, h.height as height
       FROM posts p INNER JOIN photos h ON p.id=h.post_id WHERE p.id=$1`,
       [id]
     );
