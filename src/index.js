@@ -42,17 +42,17 @@ const getPost = asyncMiddleware(async (req, res, next) => {
       a.is_original - b.is_original || a.score - b.score;
     });
     let photos = [];
-    let maxHeight = 0;
-    let correspondingWidth = 0;
 
     for (const row of sortedRows) {
-      if (row.height > maxHeight) {
-        maxHeight = row.height;
-        correspondingWidth = row.width;
-      }
-      photos.push({ url: row.url, text: row.text, score: row.score });
+      photos.push({
+        url: row.url,
+        text: row.text,
+        score: row.score,
+        height: row.height,
+        width: row.width,
+      });
     }
-    const response = { id, maxHeight, correspondingWidth, photos };
+    const response = { id, photos };
     res.json(response);
   } catch (error) {
     console.log("Encountered error");
