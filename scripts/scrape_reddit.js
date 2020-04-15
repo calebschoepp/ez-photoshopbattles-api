@@ -153,6 +153,11 @@ class Scraper {
       const subreddit = await this.r.getSubreddit("photoshopbattles");
 
       // Scrape every category
+      let newPosts = await subreddit.getNew({
+        limit: postLimit,
+      });
+      await this._handleCategory(newPosts, "new");
+
       let topDayPosts = await subreddit.getTop({
         time: "day",
         limit: postLimit,
