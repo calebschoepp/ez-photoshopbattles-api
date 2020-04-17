@@ -63,7 +63,7 @@ const getPost = asyncMiddleware(async (req, res, next) => {
       [id]
     );
     console.log(rows2);
-    const postLink = `reddit.com${rows2[0].permalink}`;
+    const postLink = `https://reddit.com${rows2[0].permalink}`;
     const response = { id, photos, postLink };
     res.json(response);
   } catch (error) {
