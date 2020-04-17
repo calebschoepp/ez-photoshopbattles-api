@@ -32,6 +32,8 @@ const getCategory = asyncMiddleware(async (req, res, next) => {
 const getPost = asyncMiddleware(async (req, res, next) => {
   try {
     const id = req.params.id;
+
+    // TODO don't need the inner join
     const { rows } = await pool.query(
       `SELECT h.cloudinary_secure_url as url, h.text as text, h.is_original as is_original,
       h.height as height, h.width as width, h.score as score
@@ -52,7 +54,17 @@ const getPost = asyncMiddleware(async (req, res, next) => {
         width: row.width,
       });
     }
-    const response = { id, photos };
+
+    console.log(id);
+    const {
+      rows: rows2,
+    } = await pool.query(
+      "SELECT permalink as permalink FROM posts WHERE id=$1",
+      [id]
+    );
+    console.log(rows2);
+    const postLink = `reddit.com${rows2[0].permalink}`;
+    const response = { id, photos, postLink };
     res.json(response);
   } catch (error) {
     console.log("Encountered error");
