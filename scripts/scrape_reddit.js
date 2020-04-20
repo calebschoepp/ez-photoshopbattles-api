@@ -93,6 +93,15 @@ class Scraper {
   }
 
   async run() {
+    // This should only run every Sunday
+    // Sunday has a weekday value of 0
+
+    const today = new Date();
+    if (today.getDay() != 0) {
+      this._h2("Not running because it isn't Sunday");
+      return;
+    }
+
     try {
       // Init postgres connection
       this.client = new Client({
